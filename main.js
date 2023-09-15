@@ -1,5 +1,8 @@
+//BUTTONS
 let startButton = document.getElementById('start-button')
 let inflateButton = document.getElementById('inflate-button')
+
+//#region GAME LOGIC AND DATA
 
 // DATA
 let clickCount = 0
@@ -7,10 +10,12 @@ let height = 120
 let width = 100
 let inflationRate = 20
 let maxsize = 300
-let popCount = 0
+let highestPopCount = 0
+let currentPopCount = 0
 let gameLength = 5000
 let clockId = 0
 let timeRemaining = 0
+let currentPlayer = {}
 
 function startGame() {
   startButton.setAttribute("disabled", "true")
@@ -35,8 +40,6 @@ function drawClock() {
   timeRemaining -= 1000
 }
 
-
-
 function inflate() {
   clickCount++
   height += inflationRate
@@ -44,7 +47,7 @@ function inflate() {
   
   if(height >= maxsize) {
     console.log("pop the balloon")
-    popCount++
+    currentPopCount++
     height = 0
     width = 0
   }
@@ -55,12 +58,14 @@ function draw() {
   let balloonElement =  document.getElementById("balloon")
   let clickCountElem = document.getElementById("click-count")
   let popCountElem = document.getElementById('pop-count')
+  let highPopCountElem = document.getElementById('high-pop-count')
   
   balloonElement.style.height = height + "px"
   balloonElement.style.width = width + "px"
   
   clickCountElem.innerText = clickCount.toString()
-  popCountElem.innerText = popCount.toString()
+  popCountElem.innerText = currentPopCount.toString()
+  highPopCountElem.innerText = currentPlayer.topScore.toString()
 }
 
 function stopGame() {
@@ -72,6 +77,55 @@ function stopGame() {
     clickCount = 0
     height = 120
     width = 100
+
+    if(currentPopCount > currentPlayer.topScore) {
+      currentPlayer.topScore = currentPopCount
+      savePlayers()
+    }
+
+    currentPopCount = 0
+
     stopClock()
     draw()
+}
+
+//#endregion
+
+let players = []
+loadPlayers()
+
+function setPlayer(event){
+  event.preventDefault()
+  let form = event.target
+
+  let playerName = form.playerName.value
+
+  currentPlayer = players.find(player => player.name == playerName)
+
+  if(!currentPlayer){
+    currentPlayer = { name: playerName, topScore: 0 }
+    players.push(currentPlayer)
+    savePlayers()
+  }
+  
+  form.reset()
+  document.getElementById("game").classList.remove("hidden")
+  form.classList.add("hidden")
+  draw()
+}
+
+function changePlayer(){
+  document.getElementById("player-form").classList.remove("hidden")
+  document.getElementById("game").classList.add(hidden)
+}
+
+function savePlayers(){
+  window.localStorage.setItem("players", JSON.stringify(players))
+}
+
+function loadPlayers(){
+  let playersData = JSON.parse(window.localStorage.getItem("players"))
+  if(playersData) {
+    players = playersData
+  }
 }
